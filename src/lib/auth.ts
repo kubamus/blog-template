@@ -45,7 +45,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const key = `login:${name}`;
 
         if (loginAttempts.get(key) || 0 >= 5) {
-          console.error("Too many attempts for user: ", name);
           throw new TooManyAttemptsError();
         }
 

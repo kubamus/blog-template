@@ -1,5 +1,5 @@
 import { posts } from "@/server/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { z, ZodError } from "zod";
 import { adminProcedure, j, publicProcedure } from "../jstack";
 import { HTTPException } from "hono/http-exception";
@@ -16,8 +16,6 @@ export const postRouter = j.router({
       try {
         // If input is missing, the Zod schema will throw an error automatically.
         const { limit, offset } = input;
-
-        console.log(limit)
 
         if (limit > 25) {
           throw new HTTPException(400, { message: "Limit cannot exceed 25" });
@@ -38,7 +36,6 @@ export const postRouter = j.router({
           .offset(offset);
         return c.json(postList);
       } catch (error) {
-        console.log("hi")
         if (error instanceof HTTPException) {
           throw error;
         }
@@ -75,4 +72,27 @@ export const postRouter = j.router({
       }
     }
   ),
+  get: publicProcedure
+    .input(
+      z.object({
+        id: z.number().positive(),
+      })
+    )
+    .get(async ({ ctx, c, input }) => {
+      try {
+        const { db } = ctx;
+        const post = await db
+          .select()
+          .from(posts)
+          .where(eq(posts.id, input.id));
+
+        if (post.length === 0) {
+          throw new HTTPException(404, { message: "Post not found" });
+        }
+
+        return c.json(post[0]);
+      } catch (error) {
+        throw new HTTPException(500, { message: "Internal Server Error" });
+      }
+    }),
 });

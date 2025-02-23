@@ -1,3 +1,4 @@
+import { InferSelectModel } from "drizzle-orm"
 import { pgTable, serial, text, timestamp, index } from "drizzle-orm/pg-core"
 
 export const posts = pgTable(
@@ -14,3 +15,5 @@ export const posts = pgTable(
     index("Post_name_idx").on(table.title)
   ]
 )
+
+export interface Post extends InferSelectModel<typeof posts> {}
