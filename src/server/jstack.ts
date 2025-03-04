@@ -1,8 +1,7 @@
 import { jstack } from "jstack"
-import { drizzle } from "drizzle-orm/postgres-js"
-import { env as envAdapter } from "hono/adapter"
 import { auth } from "@/lib/auth"
 import { env } from "@/env"
+import { db } from "@/server/db"
 import { HTTPException } from "hono/http-exception"
 
 export const j = jstack.init<{
@@ -13,14 +12,8 @@ export const j = jstack.init<{
  * Type-safely injects database into all procedures
  * @see https://jstack.app/docs/backend/middleware
  * 
- * For deployment to Cloudflare Workers
- * @see https://developers.cloudflare.com/workers/tutorials/postgres/
  */
-const databaseMiddleware = j.middleware(async ({ c, next }) => {
-  const { DATABASE_URL } = envAdapter(c)
-
-  const db = drizzle(DATABASE_URL)
-
+const databaseMiddleware = j.middleware(async ({ next }) => {
   return await next({ db })
 })
 
@@ -31,7 +24,11 @@ const databaseMiddleware = j.middleware(async ({ c, next }) => {
  */
 export const publicProcedure = j.procedure.use(databaseMiddleware)
 
-export const adminProcedure = j.procedure.use(databaseMiddleware).use(async ({ c, next }) => {
+
+/**
+ * Admin procedures
+ */
+export const adminProcedure = j.procedure.use(databaseMiddleware).use(async ({ next }) => {
   const session = await auth();
   if(!session || session.user?.name !== env.ADMIN_NAME) {
     throw new HTTPException(401, { message: "Unauthorized" });

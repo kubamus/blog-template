@@ -1,5 +1,3 @@
-import { posts } from "@/server/db/schema";
-import { desc, eq } from "drizzle-orm";
 import { z, ZodError } from "zod";
 import { adminProcedure, j, publicProcedure } from "../jstack";
 import { HTTPException } from "hono/http-exception";
@@ -22,18 +20,7 @@ export const postRouter = j.router({
         }
 
         const { db } = ctx;
-        const postList = await db
-          .select({
-            id: posts.id,
-            title: posts.title,
-            description: posts.description,
-            createdAt: posts.createdAt,
-            updatedAt: posts.updatedAt,
-          })
-          .from(posts)
-          .orderBy(desc(posts.createdAt))
-          .limit(limit)
-          .offset(offset);
+        const postList = await db.posts.findMany({ orderBy: { createdAt: "desc" }, take: limit, skip: offset });
         return c.json(postList);
       } catch (error) {
         if (error instanceof HTTPException) {
@@ -57,13 +44,13 @@ export const postRouter = j.router({
     .post(async ({ ctx, c, input }) => {
       try {
         const { db } = ctx;
-        const post = await db.insert(posts).values({
+        const post = await db.posts.create({ data: {
           title: input.title,
           description: input.description,
           content: input.content,
-        }).returning();
+        } })
         
-        return c.json(post[0]);
+        return c.json(post);
       } catch (error) {
         if (error instanceof ZodError) {
           throw new HTTPException(400, { message: "Invalid input parameters" });
@@ -81,17 +68,14 @@ export const postRouter = j.router({
     .get(async ({ ctx, c, input }) => {
       try {
         const { db } = ctx;
-        const post = await db
-          .select()
-          .from(posts)
-          .where(eq(posts.id, input.id));
+        const post = await db.posts.findUnique({ where: { id: input.id } })
 
-        if (post.length === 0) {
+        if (post === null) {
           throw new HTTPException(404, { message: "Post not found" });
         }
 
-        return c.json(post[0]);
-      } catch (error) {
+        return c.json(post);
+      } catch {
         throw new HTTPException(500, { message: "Internal Server Error" });
       }
     }),

@@ -1,5 +1,4 @@
 import { client } from "@/lib/client";
-import { Post } from "@/server/db/schema";
 import { redirect } from "next/navigation";
 import styles from "./page.module.scss";
 import Link from "next/link";
@@ -41,7 +40,9 @@ export default async function PostPage({
         <h1 className={styles.title}>{post.title}</h1>
         <p className={styles.description}>{post.description}</p>
         <div>
-          <ReactMarkdown children={post.content} />
+          <ReactMarkdown>
+            {post.content}
+          </ReactMarkdown>
         </div>
       </div>
     </main>

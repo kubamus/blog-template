@@ -7,6 +7,7 @@ export const env = createEnv({
     AUTH_SECRET: z.string(),
     ADMIN_NAME: z.string(),
     ADMIN_PASSWORD: z.string(),
+    NODE_ENV: z.enum(["development", "test", "production"]),
   },
   client: {},
   runtimeEnv: {
@@ -14,5 +15,6 @@ export const env = createEnv({
     AUTH_SECRET: process.env.AUTH_SECRET,
     ADMIN_NAME: process.env.ADMIN_NAME,
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+    NODE_ENV: process.env.NODE_ENV,
   },
 })
